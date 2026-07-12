@@ -185,6 +185,11 @@ def solve(req: SolveRequest):
     return result
 
 
+@app.get("/")
+def root():
+    return {"service": "arithmetic-word-problem-solver", "status": "ok", "endpoints": ["/solve", "/health"]}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
