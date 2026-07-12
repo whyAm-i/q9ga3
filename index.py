@@ -3,7 +3,10 @@ from pydantic import BaseModel
 from openai import OpenAI
 import os
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(
+    api_key=os.environ["AIPIPE_TOKEN"],
+    base_url="https://aipipe.org/openai/v1"
+)
 
 app = FastAPI()
 
