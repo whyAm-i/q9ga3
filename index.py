@@ -34,7 +34,7 @@ app = FastAPI(title="Arithmetic Word Problem Solver")
 # We use its OpenRouter-compatible chat completions endpoint.
 AIPIPE_TOKEN = os.environ["AIPIPE_TOKEN"]
 AIPIPE_BASE_URL = os.environ.get("AIPIPE_BASE_URL", "https://aipipe.org/openrouter/v1")
-MODEL = os.environ.get("AIPIPE_MODEL", "openai/gpt-4.1-mini")
+MODEL = os.environ.get("AIPIPE_MODEL", "openai/gpt-4.1-nano")
 MAX_ATTEMPTS = 4
 REQUEST_TIMEOUT = 60
 
