@@ -42,9 +42,13 @@ normal JWT (`eyJhbGciOi...`).
 
 Set it as `AIPIPE_TOKEN`. By default the service calls
 `https://aipipe.org/openrouter/v1/chat/completions` with model
-`openai/gpt-4.1-mini`; override via `AIPIPE_BASE_URL` / `AIPIPE_MODEL` env
-vars if you'd rather use a different OpenRouter model (e.g.
-`anthropic/claude-sonnet-4`, `google/gemini-2.5-flash`, `openai/gpt-4.1`).
+`openai/gpt-4.1-nano` — the exact model shown in AI Pipe's own docs/examples.
+Other OpenRouter models (e.g. `anthropic/claude-sonnet-4`,
+`google/gemini-2.5-flash`, `openai/gpt-4.1`) can be set via `AIPIPE_MODEL`,
+but some return `402 Insufficient credits` even when your AI Pipe balance
+looks fine — that error comes from OpenRouter's side of the proxy, not your
+AI Pipe account, so not every model is necessarily covered. Stick with
+`openai/gpt-4.1-nano` if you hit that.
 
 Note: AI Pipe's free tier is $0.10/week — fine for testing and light grading
 runs, but check your usage at `https://aipipe.org` if you're running a large
@@ -109,7 +113,7 @@ more). Each `/solve` call may make up to `MAX_ATTEMPTS` (4) sequential model
 calls if the model keeps producing invalid JSON — on a slow model that could
 approach the limit. If you see `504 FUNCTION_INVOCATION_TIMEOUT`:
 - lower `MAX_ATTEMPTS` in `api/index.py`, and/or
-- use a faster model via `AIPIPE_MODEL` (e.g. a `-mini`/`-flash` variant), and/or
+- use a faster model via `AIPIPE_MODEL` if `openai/gpt-4.1-nano` still feels slow, and/or
 - raise `maxDuration` in `vercel.json` if you're on a plan that allows it.
 
 ### If you deploy elsewhere instead
@@ -122,11 +126,10 @@ case Vercel's function limits don't fit your grading run — same
 - `MAX_ATTEMPTS` in `main.py` controls how many self-correction retries are
   allowed before returning a 502. Raise it if you see occasional grading
   failures on hard problems.
-- `AIPIPE_MODEL` defaults to `openai/gpt-4.1-mini`. Swap to a faster/cheaper
-  model if latency matters more than accuracy on your problem set, or a
-  stronger one (e.g. `anthropic/claude-sonnet-4`, `openai/gpt-4.1`) if you
-  see reasoning errors on multi-step problems. Any model ID OpenRouter
-  supports should work, since AI Pipe is just proxying to it.
+- `AIPIPE_MODEL` defaults to `openai/gpt-4.1-nano` (the model AI Pipe's docs
+  use). Swap only if you've confirmed the alternative model doesn't hit
+  `402 Insufficient credits` on AI Pipe's OpenRouter proxy — that error can
+  happen per-model regardless of your own AI Pipe balance.
 - If the grader ever sends malformed input (missing `problem` field),
   FastAPI/pydantic will return a 422 automatically — you may want to wrap
   this in a custom handler if the grader expects the solver's own JSON shape

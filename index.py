@@ -29,11 +29,13 @@ from pydantic import BaseModel, Field
 
 app = FastAPI(title="Arithmetic Word Problem Solver")
 
-# AI Pipe: a proxy in front of OpenRouter/OpenAI/Gemini that swaps your JWT
-# for the real provider key server-side. Docs: https://aipipe.org/
-# We use its OpenRouter-compatible chat completions endpoint.
-AIPIPE_TOKEN = os.environ["AIPIPE_TOKEN"]
-AIPIPE_BASE_URL = os.environ.get("AIPIPE_BASE_URL", "https://aipipe.org/openrouter/v1")
+# Model backend: defaults to AI Pipe (https://aipipe.org/), a proxy in front
+# of OpenRouter/OpenAI/Gemini that swaps a JWT for the real provider key
+# server-side. Point LLM_BASE_URL at a local Ollama server instead (e.g.
+# http://localhost:11434/v1) for local testing -- Ollama exposes the same
+# OpenAI-compatible /chat/completions shape, and needs no auth token.
+LLM_TOKEN = os.environ.get("AIPIPE_TOKEN", "")  # not required for local Ollama
+LLM_BASE_URL = os.environ.get("AIPIPE_BASE_URL", "https://aipipe.org/openrouter/v1")
 MODEL = os.environ.get("AIPIPE_MODEL", "openai/gpt-4.1-nano")
 MAX_ATTEMPTS = 4
 REQUEST_TIMEOUT = 60
@@ -124,12 +126,13 @@ def _call_model(problem: str, correction: str | None = None) -> dict[str, Any]:
             "Return ONLY the corrected JSON object, following the rules exactly."
         )
 
+    headers = {"Content-Type": "application/json"}
+    if LLM_TOKEN:
+        headers["Authorization"] = f"Bearer {LLM_TOKEN}"
+
     resp = requests.post(
-        f"{AIPIPE_BASE_URL}/chat/completions",
-        headers={
-            "Authorization": f"Bearer {AIPIPE_TOKEN}",
-            "Content-Type": "application/json",
-        },
+        f"{LLM_BASE_URL}/chat/completions",
+        headers=headers,
         json={
             "model": MODEL,
             "messages": [
@@ -142,13 +145,13 @@ def _call_model(problem: str, correction: str | None = None) -> dict[str, Any]:
     )
 
     if resp.status_code != 200:
-        raise ValueError(f"AI Pipe request failed ({resp.status_code}): {resp.text[:300]}")
+        raise ValueError(f"LLM request failed ({resp.status_code}): {resp.text[:300]}")
 
     data = resp.json()
     try:
         text = data["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as e:
-        raise ValueError(f"Unexpected AI Pipe response shape: {data}") from e
+        raise ValueError(f"Unexpected LLM response shape: {data}") from e
 
     return _extract_json_object(text)
 
