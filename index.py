@@ -58,7 +58,7 @@ app = FastAPI(title="Arithmetic Word Problem Solver")
 LLM_TOKEN = os.environ.get("AIPIPE_TOKEN", "")
 LLM_BASE_URL = os.environ.get("AIPIPE_BASE_URL", "https://aipipe.org/openrouter/v1")
 MODEL = os.environ.get("AIPIPE_MODEL", "openai/gpt-4.1-nano")
-MAX_ATTEMPTS = 4
+MAX_ATTEMPTS = 200
 REQUEST_TIMEOUT = 60
 
 # ---------------------------------------------------------------------------
